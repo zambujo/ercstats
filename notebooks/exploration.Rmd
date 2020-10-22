@@ -1,0 +1,580 @@
+---
+title: "Participation of ERC Member Countries in FP8"
+author: "João Martins"
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_file=here::here('docs', 'index.html')) })
+output:
+  html_document:
+    toc: true
+    theme: united
+    highlight: breezedark
+    toc_float: true
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(knitr)
+library(here)
+library(scales)
+library(ggrepel)
+library(ggthemes)
+library(ggforce)
+library(ggsci)
+library(ggflags)
+library(ggbump)
+library(eurostat)
+library(wbstats)
+library(countrycode)
+library(conflicted)
+conflict_prefer("filter", "dplyr")
+opts_chunk$set(
+  echo = FALSE, 
+  warning = FALSE, 
+  message = FALSE)
+options(dplyr.summarise.inform = FALSE)
+```
+
+# Summary
+
+* The analysis shows uneven distributions of country participation measured by both proposals and projects. 
+
+* Inequalities visible in areas such as GDP and GERD are reproduced in countries' participation rates.
+
+* Comparing the distribution of proposals and projects across countries, the analysis shows that the distribution of projects is more uneven than that of proposals.
+
+* Noteworthy findings for individual countries:
+    + the UK accounted for nearly 20% of proposals and projects. Out of the 43 participating countries, the UK submitted the same amount of proposals as the 32 lowest participating countries and was awarded as many projects as the 34 lowest participating ones;
+    + Israel and Switzerland had outstanding success  in LS and PE;
+    + The Netherlands has been remarkably successful in SH.
+
+```{r data-enrichment, include=FALSE}
+# ERC data on country participation (H2020)
+participation <- 
+  here("data", "erc_country_stats.rds.bz2") %>%
+  read_rds() %>%
+  filter(programme == "FP8")
+
+# country label conversion for world bank data
+countries <- 
+  participation %>%
+  distinct(country) %>%
+  left_join(
+    select(codelist, eurostat, iso2c, country.name.en, eu28), 
+    by = c("country" = "country.name.en")) %>%
+  mutate(
+    eu28 = ifelse(!is.na(eu28), TRUE, FALSE),
+    country_label = country,
+    country_label = str_replace(country_label, 
+                                    "United Kingdom", 
+                                    "UK"),
+    country_label = str_replace(country_label, 
+                                "North Macedonia", 
+                                "N. Macedonia"),
+    country_label = str_replace(country_label,
+                                "Bosnia & Herzegovina",
+                                "Bosnia-Herz."))
+
+countries %>% 
+  arrange(country) %>% 
+  print(n=42)
+
+## world bank data
+wbdata <- wb_data(
+  indicator = c("GB.XPD.RSDV.GD.ZS", "NY.GDP.MKTP.CD", "SP.POP.TOTL"), 
+  country = pull(countries, iso2c),
+  start_date = 2014, end_date = 2020) %>% 
+  rename(
+    population = "SP.POP.TOTL",
+    gdp = "NY.GDP.MKTP.CD",
+    gerd_percent = "GB.XPD.RSDV.GD.ZS") %>%
+  mutate(gerd = gdp * gerd_percent / 100) %>% 
+  select(-gerd_percent) %>%
+  pivot_longer(
+    c("population", "gdp", "gerd"),
+    "indicator", 
+    "value") %>%
+  group_by(iso2c, indicator) %>%
+  summarise(avg = mean(value, na.rm = TRUE)) %>%
+  ungroup()
+```
+
+# Data and conventions
+
+Figures from [ERC website](https://erc.europa.eu/projects-figures/statistics).  [World Bank Open Data](https://data.worldbank.org) provides complementary country indicators such as population, GDP, and Gross Expenditure on R&D (GERD).  Country codes are provided by {[`countrycode`](https://joss.theoj.org/papers/10.21105/joss.00848)}.
+
+**Proposals** correspond to evaluated grant applications and **projects** correspond to funded proposals.
+
+## Overview {.tabset .tabset-fade .tabset-pills}
+
+The number of proposals by country ranges from only a few (e.g. in Moldova, Albania, Armenia, or Tunisia) to several thousands (e.g. in the UK, Germany, France, or Italy).  Out of the 43 participating countries, 10 have not been awarded any project.
+
+Overall, the UK has been the most active country. To date, it accounts for 18% of the proposals and 19% of the projects.  Germany and France complete the podium.
+
+On the whole, the distribution of the number of proposals by domain is comparable to that of all domains.  The UK has been noticeably active in SH where it submitted more than double the number of proposals than the second most active country.  In total, in SH, the UK submitted 23% of the proposals and was awarded 29% of the projects.
+
+```{r plot-template, include=FALSE}
+my_theme <- theme_minimal() +
+  theme(
+    plot.title.position = "plot",
+    axis.ticks.y=element_blank(),
+    legend.position = c(.85, 1.05), ## "top",
+    legend.direction="horizontal",
+    legend.key.size = unit(4, "mm"),
+    legend.title = element_text(size = 8.5),
+    legend.text = element_text(size = 9),
+    legend.background = element_rect(
+      linetype="dotted",
+      fill = alpha("white", 1),
+      color = alpha("black", 0.25)))
+
+get_ordered_labels <- function(df) {
+  df %>% 
+    group_by(country) %>%
+    summarise(N = sum(n)) %>%
+    left_join(countries, by = 'country') %>%
+    mutate(country_label = reorder(country_label, N)) %>%
+    select(country, country_label)
+}
+
+get_participation_plot <- function(df,
+                                   title,
+                                   subtitle,
+                                   caption,
+                                   legend_title) {
+  df %>%
+    ggplot(aes(x = country_label, y=n, fill = funded)) +
+    geom_bar(position = "stack", stat = "identity", alpha = .7) +
+    scale_fill_manual(values = rev(pal_d3()(2))) +
+    scale_y_continuous(expand = c(0.001, 0.02, .02, .02),
+                       labels = number_format(accuracy = 1)) +
+    guides(fill = guide_legend(reverse = TRUE)) +
+    labs(title = title, 
+         subtitle = subtitle, 
+         caption = caption,
+         fill = legend_title,
+         x = element_blank(), 
+         y = element_blank()) +
+    coord_flip() +
+    my_theme
+}
+
+participation_table <- function(df) {
+  df %>%
+    pivot_wider(names_from = funded, values_from = n) %>%
+    left_join(countries, by = 'country') %>%
+    mutate(Proposals = `TRUE` + `FALSE`) %>%
+    rename(Country = country_label,
+           Projects = `TRUE`,
+           Rejections = `FALSE`) %>%
+    arrange(desc(Proposals)) %>%
+    select(Country, Proposals, Projects, Rejections)
+}
+
+```
+
+### All
+
+```{r summary, fig.asp=.75}
+df <- participation %>%
+  group_by(country, funded) %>%
+  summarise(n = sum(n)) %>%
+  mutate(funded = ifelse(funded, "Yes", "No"))
+
+df %>% 
+  left_join(get_ordered_labels(df), by = "country") %>%
+  get_participation_plot(
+    title = "Overall Country Participation",
+    subtitle = "Number of ERC Proposals in FP8",
+    caption = "Country names ordered by number of proposals.",
+    legend_title = "Funded")
+```
+
+### LS
+
+```{r ls, fig.asp=.75}
+df <- participation %>%
+  filter(research_domain == "LS") %>%
+  group_by(country, funded) %>%
+  summarise(n = sum(n)) %>%
+  mutate(funded = ifelse(funded, "Yes", "No"))
+
+df %>% 
+  left_join(get_ordered_labels(df), by = 'country') %>%
+  get_participation_plot(
+    title = "Country Participation in Life Sciences (LS)",
+    subtitle = "Number of ERC Proposals in LS under FP8",
+    caption = "Country names ordered by number of proposals.",
+    legend_title = "Funded")
+```
+
+### PE
+
+```{r pe, fig.asp=.75}
+df <- participation %>%
+  filter(research_domain == "PE") %>%
+  group_by(country, funded) %>%
+  summarise(n = sum(n)) %>%
+  mutate(funded = ifelse(funded, "Yes", "No"))
+
+df %>% 
+  left_join(get_ordered_labels(df), by = 'country') %>%
+  get_participation_plot(
+    title = "Country Participation in Pysical Sicences and Engineering (PE)",
+    subtitle = "Number of ERC Proposals in PE under FP8",
+    caption = "Country names ordered by number of proposals.",
+    legend_title = "Funded")
+```
+
+### SH
+
+```{r sh, fig.asp=.75}
+df <- participation %>%
+  filter(research_domain == "SH") %>%
+  group_by(country, funded) %>%
+  summarise(n = sum(n)) %>%
+  mutate(funded = ifelse(funded, "Yes", "No"))
+
+df %>% 
+  left_join(get_ordered_labels(df), by = 'country') %>%
+  get_participation_plot(
+    title = "Country Participation in Social Sciences and Humanities (SH)",
+    subtitle = "Number of ERC Proposals in SH under FP8",
+    caption = "Country names ordered by number of proposals.",
+    legend_title = "Funded")
+```
+
+## Rankings of top participating countries
+
+Comparison of the rankings by numbers of proposals and projects reveals consistent drops for Spain and Italy. By contrast, Germany, Israel, and Switzerland typically show better rankings for projects than for proposals.
+
+```{r rankings, fig.asp=.75}
+my_bump_theme <- theme_minimal() +
+  theme(
+    axis.text.x = element_text(face = "bold"),
+    axis.text.y = element_blank(),
+    plot.title.position = "plot",
+    legend.position = "none",
+    panel.grid = element_blank())
+
+get_top_ten <- function(df, what, top = 10) {
+  df %>%
+    group_by(country) %>%
+    summarise(n = sum(n)) %>%
+    arrange(desc(n)) %>%
+    select(country) %>%
+    head(top) %>%
+    mutate(type = what, rank = row_number())  
+}
+
+get_rankings <- function(df, ...) {
+  from_to <- c("Proposals", "Projects")
+  bind_rows(
+    df %>% get_top_ten(from_to[1]),
+    df %>% filter(funded) %>% get_top_ten(from_to[2])) %>%
+  mutate(
+    type = factor(type, levels = from_to),
+    x = as.numeric(type),
+    iso2c = str_to_lower(countrycode(country, "country.name", "iso2c")))
+}
+
+rankings <- bind_rows(
+  participation %>%
+    get_rankings(),
+  participation %>%
+    filter(!is.na(research_domain)) %>%
+    group_split(research_domain) %>%
+    map_df(get_rankings)) %>%
+  mutate(research_domain = rep(c("All", "LS", "PE", "SH"), each = 20))
+
+rankings %>% 
+  ggplot(aes(x, rank, color = country)) +
+  geom_bump(size = 2, alpha = .4) +
+  geom_point(size = 3, alpha = .7) +
+  geom_text(data = tibble(xpos = rep(.92, 10), 
+                          ypos = 1:10, 
+                          txt = as.character(1:10)),
+            aes(x = xpos, y = ypos, label = txt), 
+            size = 3, color = "gray40") +
+  geom_flag(
+    data = filter(rankings, x == min(x)),
+    aes(country = iso2c)) +
+  geom_flag(
+    data = filter(rankings, x == max(x)),
+    aes(country = iso2c)) +
+  scale_y_reverse(breaks = 1:10, 
+                  labels = number_format(accuracy = 1)) +
+  scale_x_continuous(
+    expand = c(0.02, 0, .1, 0),
+    breaks = unique(pull(rankings, x)),
+    labels = rev(levels(pull(rankings, type)))) +
+  labs(
+    title = "Countries' rankings in translating from proposals to projects",
+    subtitle = "Top-ranked countries by domain",
+    x = element_blank(),
+    y = element_blank()) +
+  facet_wrap(~research_domain) + 
+  my_bump_theme
+```
+
+## Participation versus GERD and GDP 
+
+The observed inequality in country participation is largely mirrored in countries' GDP and GERD levels.  That applies for both EU28 and non-EU28 participants.
+
+```{r rsquared, include=FALSE}
+projects <- 
+  participation %>%
+  filter(funded) %>%
+  group_by(country) %>%
+  summarise(projects = sum(n))
+
+proposals <- 
+  participation %>%
+  group_by(country) %>%
+  summarise(proposals = sum(n))
+
+country_stats <- 
+  wbdata %>%
+  pivot_wider(names_from = indicator, values_from = avg) %>%
+  left_join(countries, on = "iso2c") %>%
+  left_join(proposals, on = "country") %>%
+  left_join(projects, on = "country") %>%
+  mutate(
+    population = population * 1e-6,
+    gdp = gdp * 1e-9,
+    gerd = gerd * 1e-6)
+
+lm_pro <- lm(log(projects + 0.01) ~ log(proposals + 0.01), data = country_stats)
+lm_pop <- lm(log(projects + 0.01) ~ log(population), data = country_stats)
+lm_gdp <- lm(log(projects + 0.01) ~ log(gdp), data = country_stats)
+lm_gerd <- lm(log(projects + 0.01) ~ log(gerd), data = country_stats)
+
+r_squared <- tibble(
+  indicator = factor(
+    c("Number of Proposals",
+      "Population (m)", 
+      "Annual GDP ($bn)", 
+      "Annual GERD ($m)"), 
+    levels = c(
+      "Number of Proposals",
+      "Population (m)", 
+      "Annual GDP ($bn)", 
+      "Annual GERD ($m)")),
+  rs = c(summary(lm_pro)$r.squared,
+         summary(lm_pop)$r.squared,
+         summary(lm_gdp)$r.squared,
+         summary(lm_gerd)$r.squared)) %>%
+  mutate(
+    rs = sprintf("R^2==%.02f", rs),
+    eu28 = TRUE)
+```
+
+```{r indicators, fig.asp = .85}
+country_stats %>%
+  pivot_longer(
+    c("gdp", "gerd", "population", "proposals"),
+    names_to = "indicator",
+    values_to = "value") %>%
+  mutate(
+    indicator = fct_recode(indicator, 
+                           `Number of Proposals` = "proposals",
+                           `Population (m)` = "population",
+                           `Annual GDP ($bn)` = "gdp",
+                           `Annual GERD ($m)` = "gerd"),
+    indicator = fct_relevel(indicator,
+                            "Number of Proposals", 
+                            "Population (m)", 
+                            "Annual GDP ($bn)",
+                            "Annual GERD ($m)")) %>%
+  ggplot(aes(value, projects, label = eurostat, col = eu28)) +
+  scale_color_tableau(direction = -1, guide = guide_legend(reverse = TRUE)) +
+  geom_smooth(method = "lm", se = FALSE, col = "gray75", size = .8) +
+  geom_point(size = 1.5, alpha = .5) +
+  geom_text_repel(size = 3, show.legend = FALSE) + 
+  geom_text(
+    data = r_squared,
+    aes(x = Inf, y = 1, label = rs),
+    hjust = 1.225, vjust = -.35, parse = TRUE,
+    col = "gray40", size = 3.5, fontface = "bold.italic") +
+  scale_y_log10(labels = number_format(accuracy = 1)) + 
+  scale_x_log10(labels = number_format(accuracy = 1)) + 
+  facet_wrap(indicator~., scales = "free", nc = 2) +
+  labs(title = "Participation Correlates Best with GERD (in log-scale)", 
+       caption = "Source: ERC, World Bank",
+       x = element_blank(),
+       y = "Number of Grants") +
+  theme(plot.title.position = "plot",
+        legend.position = c(.17, .96),
+        legend.direction = "horizontal",
+        legend.background = element_rect(fill = alpha("white", .4)))
+```
+
+# Activity and success
+
+The **activity index** of a country is the proportion of proposals of the country in a domain divided by the average proportion of proposals of other countries in that same domain.
+
+The **success index** of a country is the success rate of the country in a domain divided by the average success rate of other countries in that same domain.
+
+```{r indices, include=FALSE}
+country_rankings <- 
+  participation %>%
+  group_by(country) %>%
+  summarise(n = sum(n)) %>%
+  arrange(desc(n)) %>%
+  select(country)
+
+#! depends on country_participation being ordered by number of submissions
+calculate_figures <- function(..., country_rank, df = participation) {
+  by <- enquos(..., .named = TRUE)
+  df %>% 
+    filter(funding_scheme %in% c("StG", "CoG", "AdG")) %>%
+    semi_join(slice(country_rankings, country_rank), by = "country") %>%
+    group_by(!!!by, funded) %>%
+    summarise(grants = sum(n, na.rm = TRUE)) %>%
+    mutate(applications = sum(grants, na.rm = TRUE)) %>%
+    ungroup() %>%
+    filter(funded) %>%
+    select(-funded) %>%
+    mutate(
+      share_applications = 100 * applications / sum(applications),
+      share_grants = 100 * grants / sum(grants),
+      success_rate = 100 * grants / applications)
+
+}
+
+get_indexes <- function(..., country_rank, within_selection) {
+  country_slice <- slice(country_rankings, country_rank)
+  self_name <- country_slice %>% pull("country")
+  self <- calculate_figures(..., country_rank = country_rank)
+  others_rank <- (within_selection)[-country_rank]
+  others <- calculate_figures(..., country_rank = others_rank)
+  self %>% 
+    mutate(
+      activity = share_applications / pull(others, share_applications),
+      success = success_rate / pull(others, success_rate)) %>%
+      select(-(grants:success_rate)) %>% mutate(country = self_name) %>%
+      select(last_col(), everything())
+}
+
+plot_indexes <- function(df, 
+                         facet_factor, 
+                         title, 
+                         subtitle,
+                         nc = 3) {
+  df %>%
+    left_join(countries, on = "country") %>%
+    ggplot(aes(x = activity, y = success, label = eurostat, col = eurostat)) +
+    geom_hline(yintercept = 1, color = "white", size = 2, alpha = .5) +
+    geom_vline(xintercept = 1, color = "white", size = 2, alpha = .5) +
+    geom_hline(yintercept = 1, 
+               color = "black", linetype = "longdash",
+               size = .3, alpha = .3) +
+    geom_vline(xintercept = 1, 
+               color = "black", linetype = "longdash",
+               size = .3, alpha = .3) +
+    scale_color_tableau() +
+    geom_point(size = 2, alpha = 1, shape = 1) +
+    geom_point(size = 2, alpha = .5) +
+    geom_text_repel() +
+    labs(
+      title = title,
+      subtitle = subtitle,
+      caption = "Source: ERC",
+      x = "Activity Index",
+      y = "Success Index") +
+    facet_wrap(as.formula(paste("~", facet_factor)), ncol = nc) +
+    theme(
+      plot.title.position = "plot",
+      legend.position = "none")
+}
+```
+
+## Figures by domain
+
+Comparison of the activity and success indexes among the 10 top participating countries provides a number of interesting individual observations:
+
+* **LS**
+    + Israel, Switzerland, and Germany have been outstandingly active and successful;
+* **PE**
+    + Switzerland and Israel have been extremely successful but only moderately active;
+    + The Netherlands has been relatively successful but not so active;
+* **SH**
+    + both the UK and the Netherlands have been outstandingly active and successful.
+
+```{r top-ten-by-domain, fig.asp=.45}
+map_df(
+  1:10, 
+  function(n) 
+    get_indexes(research_domain, 
+                country_rank = n, 
+                within_selection = 1:10)) %>%
+  plot_indexes(
+    facet_factor = "research_domain",
+    title = "Activity and Success by Domain",
+    subtitle = "Among the 10 Top Participating Countries")
+```
+
+Among mid-range participating countries (compared among themselves):
+
+* **LS** 
+    + Austria has been outstandingly successful but only moderately active;
+* **PE** 
+    + Norway has been relatively successful but not active;
+    + Poland, Greece, Czechia, and Turkey show high activity but low success;
+* **SH**
+    + Ireland has been both active and relatively successful;
+    + Austria has been relatively successful but not so active;
+    + Norway has been extremely active, but only moderately successful.
+
+```{r eleven-twenty-by-domain, fig.asp=.45}
+map_df(
+  11:20, 
+  function(n)
+    get_indexes(research_domain,
+                country_rank = n, 
+                within_selection = 11:20)) %>%
+  plot_indexes(
+    facet_factor = "research_domain",
+    title = "Activity and Success by Domain",
+    subtitle = "Among the 11-20 Top Participating Countries")
+```
+
+## Figures by panel
+
+Among the 10 top participating countries:
+
+* Israel stands out in LS2 (genetics, genomics, bioinformatics, and systems biology) and PE1 (mathematics);
+* Switzerland stands out in PE8 (products and processes engineering) and PE9 (universe sciences);
+* The Netherlands stands out in SH2 (institutions, values, beliefs, and behavior) and SH3 (environment, space, and population).
+
+```{r top-ten-ls-panel, fig.asp=1.8}
+map_df(
+  1:10, 
+  function(n) 
+    get_indexes(research_panel, 
+                country_rank = n, 
+                within_selection = 1:10)) %>%
+  mutate(
+    research_panel = fct_relevel(
+      research_panel,
+      c("LS1", "LS2", "LS3", "LS4", "LS5", "LS6", "LS7", "LS8", "LS9",
+        "PE1", "PE2", "PE3", "PE4", "PE5", "PE6", "PE7", "PE8", "PE9", "PE10",
+        "SH1", "SH2", "SH3", "SH4", "SH5", "SH6"))) %>%
+  plot_indexes(
+    facet_factor = "research_panel",
+    title = "Activity and Success by Panel",
+    subtitle = "Among 10 Top Participating Countries",
+    nc = 4)
+```
+
+# See also
+
+* [ERC funding activities 2007-2013: Key facts, patterns and trends](https://erc.europa.eu/sites/default/files/publication/files/ERC_funding_activities_2007_2013.pdf)
+* [Swiss Participation in European Research Framework Programmes: Facts and Figures 2018](https://www.sbfi.admin.ch/sbfi/en/home/services/publications/data-base-publications/fp-2018.html)
+
+
+Last updated: `r Sys.Date()`.
