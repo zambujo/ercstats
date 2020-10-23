@@ -574,7 +574,3 @@ map_df(
 # See also
 
 * [ERC funding activities 2007-2013: Key facts, patterns and trends](https://erc.europa.eu/sites/default/files/publication/files/ERC_funding_activities_2007_2013.pdf)
-* [Swiss Participation in European Research Framework Programmes: Facts and Figures 2018](https://www.sbfi.admin.ch/sbfi/en/home/services/publications/data-base-publications/fp-2018.html)
-
-
-Last updated: `r Sys.Date()`.
