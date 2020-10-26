@@ -57,7 +57,7 @@ options(dplyr.summarise.inform = FALSE)
 participation <- 
   here("data", "erc_country_stats.rds.bz2") %>%
   read_rds() %>%
-  filter(programme == "FP8")
+  filter(call_year > 2013)
 
 # country label conversion for world bank data
 countries <- 
