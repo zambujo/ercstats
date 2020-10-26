@@ -390,6 +390,7 @@ country_stats %>%
                             "Population (m)", 
                             "Annual GDP ($bn)",
                             "Annual GERD ($m)")) %>%
+  filter(projects > 1) %>% # un-clutter the plot
   ggplot(aes(value, projects, label = eurostat, col = eu28)) +
   scale_color_tableau(direction = -1, guide = guide_legend(reverse = TRUE)) +
   geom_smooth(method = "lm", se = FALSE, col = "gray75", size = .8) +
