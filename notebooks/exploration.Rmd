@@ -20,23 +20,31 @@ editor_options:
 library(tidyverse)
 library(knitr)
 library(here)
-library(scales)
-library(ggrepel)
-library(ggthemes)
-library(ggforce)
-library(ggsci)
-library(ggflags)
-library(ggbump)
-library(eurostat)
-library(wbstats)
 library(countrycode)
 library(conflicted)
+
+# library(ggflags)
+# library(ggbump)
+# library(ggrepel)
+# library(ggsci)
+# library(ggthemes)
+# library(ggforce)
+
 conflict_prefer("filter", "dplyr")
 opts_chunk$set(
   echo = FALSE, 
   warning = FALSE, 
   message = FALSE)
 options(dplyr.summarise.inform = FALSE)
+
+# ERC data on country participation (H2020 only)
+participation <- 
+  here("data", "erc_country_stats.rds") %>%
+  read_rds() %>%
+  filter(call_year > 2013)
+
+# source(here("R", "extra-data.R"))
+# wbdata <- get_indicators(pull(distinct(participation, iso2c)))
 ```
 
 # Summary
@@ -52,60 +60,6 @@ options(dplyr.summarise.inform = FALSE)
     + Israel and Switzerland had outstanding success  in LS and PE;
     + The Netherlands has been remarkably successful in SH.
 
-```{r data-enrichment, include=FALSE}
-# ERC data on country participation (H2020)
-participation <- 
-  here("data", "erc_country_stats.rds") %>%
-  read_rds() %>%
-  # fp9 only
-  filter(call_year > 2013) %>%
-  # back compatibility
-  mutate(country = countrycode(iso2c, "iso2c", "country.name.en"))
-
-# country label conversion for world bank data
-countries <- 
-  participation %>%
-  distinct(country) %>%
-  left_join(
-    select(codelist, eurostat, iso2c, country.name.en, eu28), 
-    by = c("country" = "country.name.en")) %>%
-  mutate(
-    eu28 = ifelse(!is.na(eu28), TRUE, FALSE),
-    country_label = country,
-    country_label = str_replace(country_label, 
-                                    "United Kingdom", 
-                                    "UK"),
-    country_label = str_replace(country_label, 
-                                "North Macedonia", 
-                                "N. Macedonia"),
-    country_label = str_replace(country_label,
-                                "Bosnia & Herzegovina",
-                                "Bosnia-Herz."))
-
-countries %>% 
-  arrange(country) %>% 
-  print(n=42)
-
-## world bank data
-wbdata <- wb_data(
-  indicator = c("GB.XPD.RSDV.GD.ZS", "NY.GDP.MKTP.CD", "SP.POP.TOTL"), 
-  country = pull(countries, iso2c),
-  start_date = 2014, end_date = 2020) %>% 
-  rename(
-    population = "SP.POP.TOTL",
-    gdp = "NY.GDP.MKTP.CD",
-    gerd_percent = "GB.XPD.RSDV.GD.ZS") %>%
-  mutate(gerd = gdp * gerd_percent / 100) %>% 
-  select(-gerd_percent) %>%
-  pivot_longer(
-    c("population", "gdp", "gerd"),
-    "indicator", 
-    "value") %>%
-  group_by(iso2c, indicator) %>%
-  summarise(avg = mean(value, na.rm = TRUE)) %>%
-  ungroup()
-```
-
 # Data and conventions
 
 Figures from [ERC website](https://erc.europa.eu/projects-figures/statistics).  [World Bank Open Data](https://data.worldbank.org) provides complementary country indicators such as population, GDP, and Gross Expenditure on R&D (GERD).  Country codes are provided by {[`countrycode`](https://joss.theoj.org/papers/10.21105/joss.00848)}.
@@ -120,135 +74,36 @@ Overall, the UK has been the most active country. To date, it accounts for 18% o
 
 On the whole, the distribution of the number of proposals by domain is comparable to that of all domains.  The UK has been noticeably active in SH where it submitted more than double the number of proposals than the second most active country.  In total, in SH, the UK submitted 23% of the proposals and was awarded 29% of the projects.
 
-```{r plot-template, include=FALSE}
-my_theme <- theme_minimal() +
-  theme(
-    plot.title.position = "plot",
-    axis.ticks.y=element_blank(),
-    legend.position = c(.85, 1.05), ## "top",
-    legend.direction="horizontal",
-    legend.key.size = unit(4, "mm"),
-    legend.title = element_text(size = 8.5),
-    legend.text = element_text(size = 9),
-    legend.background = element_rect(
-      linetype="dotted",
-      fill = alpha("white", 1),
-      color = alpha("black", 0.25)))
-
-get_ordered_labels <- function(df) {
-  df %>% 
-    group_by(country) %>%
-    summarise(N = sum(n)) %>%
-    left_join(countries, by = 'country') %>%
-    mutate(country_label = reorder(country_label, N)) %>%
-    select(country, country_label)
-}
-
-get_participation_plot <- function(df,
-                                   title,
-                                   subtitle,
-                                   caption,
-                                   legend_title) {
-  df %>%
-    ggplot(aes(x = country_label, y=n, fill = funded)) +
-    geom_bar(position = "stack", stat = "identity", alpha = .7) +
-    scale_fill_manual(values = rev(pal_d3()(2))) +
-    scale_y_continuous(expand = c(0.001, 0.02, .02, .02),
-                       labels = number_format(accuracy = 1)) +
-    guides(fill = guide_legend(reverse = TRUE)) +
-    labs(title = title, 
-         subtitle = subtitle, 
-         caption = caption,
-         fill = legend_title,
-         x = element_blank(), 
-         y = element_blank()) +
-    coord_flip() +
-    my_theme
-}
-
-participation_table <- function(df) {
-  df %>%
-    pivot_wider(names_from = funded, values_from = n) %>%
-    left_join(countries, by = 'country') %>%
-    mutate(Proposals = `TRUE` + `FALSE`) %>%
-    rename(Country = country_label,
-           Projects = `TRUE`,
-           Rejections = `FALSE`) %>%
-    arrange(desc(Proposals)) %>%
-    select(Country, Proposals, Projects, Rejections)
-}
-
-```
-
 ### All
 
 ```{r summary, fig.asp=.75}
-df <- participation %>%
-  group_by(country, funded) %>%
-  summarise(n = sum(n)) %>%
-  mutate(funded = ifelse(funded, "Yes", "No"))
-
-df %>% 
-  left_join(get_ordered_labels(df), by = "country") %>%
-  get_participation_plot(
-    title = "Overall Country Participation",
-    subtitle = "Number of ERC Proposals in FP8",
-    caption = "Country names ordered by number of proposals.",
-    legend_title = "Funded")
+source(here("R", "overview.R"))
+participation %>%
+  plot_participation()
 ```
 
 ### LS
 
 ```{r ls, fig.asp=.75}
-df <- participation %>%
+participation %>%
   filter(research_domain == "LS") %>%
-  group_by(country, funded) %>%
-  summarise(n = sum(n)) %>%
-  mutate(funded = ifelse(funded, "Yes", "No"))
-
-df %>% 
-  left_join(get_ordered_labels(df), by = 'country') %>%
-  get_participation_plot(
-    title = "Country Participation in Life Sciences (LS)",
-    subtitle = "Number of ERC Proposals in LS under FP8",
-    caption = "Country names ordered by number of proposals.",
-    legend_title = "Funded")
+  plot_participation(title = "Country Participation in LS")
 ```
 
 ### PE
 
 ```{r pe, fig.asp=.75}
-df <- participation %>%
+participation %>%
   filter(research_domain == "PE") %>%
-  group_by(country, funded) %>%
-  summarise(n = sum(n)) %>%
-  mutate(funded = ifelse(funded, "Yes", "No"))
-
-df %>% 
-  left_join(get_ordered_labels(df), by = 'country') %>%
-  get_participation_plot(
-    title = "Country Participation in Pysical Sicences and Engineering (PE)",
-    subtitle = "Number of ERC Proposals in PE under FP8",
-    caption = "Country names ordered by number of proposals.",
-    legend_title = "Funded")
+  plot_participation(title = "Country Participation in PE")
 ```
 
 ### SH
 
 ```{r sh, fig.asp=.75}
-df <- participation %>%
+participation %>%
   filter(research_domain == "SH") %>%
-  group_by(country, funded) %>%
-  summarise(n = sum(n)) %>%
-  mutate(funded = ifelse(funded, "Yes", "No"))
-
-df %>% 
-  left_join(get_ordered_labels(df), by = 'country') %>%
-  get_participation_plot(
-    title = "Country Participation in Social Sciences and Humanities (SH)",
-    subtitle = "Number of ERC Proposals in SH under FP8",
-    caption = "Country names ordered by number of proposals.",
-    legend_title = "Funded")
+  plot_participation(title = "Country Participation in SH")
 ```
 
 ## Rankings of top participating countries
