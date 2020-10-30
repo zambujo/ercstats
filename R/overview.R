@@ -30,7 +30,7 @@ plot_participation <- function(df,
     geom_bar(position = "dodge",
              stat = "identity",
              alpha = .7) +
-    scale_fill_grey() +
+    scale_fill_grey(start = 0, end = .5) +
     scale_y_continuous(expand = c(0.001, 0.02, .02, .02),
                        labels = number_format(accuracy = 1)) +
     guides(fill = guide_legend(reverse = TRUE)) +

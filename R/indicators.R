@@ -1,6 +1,9 @@
 library(dplyr)
 library(tidyr)
 library(wbstats)
+library(ggplot2)
+library(scales)
+library(ggrepel)
 options(dplyr.summarise.inform = FALSE)
 
 
@@ -42,5 +45,43 @@ get_indicators <- function(iso2c, from = 2014L, to = 2020L) {
   result %>%
     group_by(iso2c, indicator) %>%
     summarise(value = mean(value, na.rm = TRUE)) %>%
-    ungroup()
+    ungroup() %>%
+    pivot_wider(names_from = indicator, values_from = value)
+}
+
+
+plot_indicators <- function(df,
+                            x_lab,
+                            y_lab = "Granted Projects",
+                            caption = "Source: ERC website, World Bank") {
+  ggplot(aes(x, y, label = iso2c, col = eu28), data =df) +
+    scale_color_grey(start = 0, end = .5) +
+    geom_smooth(
+      method = "lm",
+      se = FALSE,
+      col = "gray85",
+      size = .8
+    ) +
+    geom_point(size = 1.5, alpha = .5) +
+    geom_text_repel(size = 3, show.legend = FALSE) +
+    scale_y_log10(labels = number_format(accuracy = 1)) +
+    scale_x_log10(labels = number_format(accuracy = 1)) +
+    labs(
+      caption = caption,
+      color = element_blank(),
+      x = x_lab,
+      y = y_lab
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title.position = "plot",
+      legend.position = c(.17, .96),
+      legend.direction = "horizontal",
+      legend.key.size = unit(4, "mm"),
+      legend.background = element_rect(
+        linetype = "dotted",
+        fill = alpha("white", 1),
+        color = alpha("black", 0.25)
+      )
+    )
 }

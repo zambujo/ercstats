@@ -24,7 +24,7 @@ library(countrycode)
 library(conflicted)
 
 
-# library(ggrepel)
+
 # library(ggsci)
 # library(ggthemes)
 # library(ggforce)
@@ -142,101 +142,49 @@ participation %>%
   plot_rankings(title = "Ranking of top-10 participating countries in SH")
 ```
 
-## Participation versus GERD and GDP 
+## Participation, GDP, and GERD  {.tabset .tabset-fade .tabset-pills} 
 
 The observed inequality in country participation is largely mirrored in countries' GDP and GERD levels.  That applies for both EU28 and non-EU28 participants.
 
-```{r deprecated-rsquared, eval=FALSE}
-projects <- 
-  participation %>%
-  filter(funded) %>%
-  group_by(country) %>%
-  summarise(projects = sum(n))
-
-proposals <- 
-  participation %>%
-  group_by(country) %>%
-  summarise(proposals = sum(n))
-
-country_stats <- 
-  wbdata %>%
-  pivot_wider(names_from = indicator, values_from = avg) %>%
-  left_join(countries, on = "iso2c") %>%
-  left_join(proposals, on = "country") %>%
-  left_join(projects, on = "country") %>%
-  mutate(
-    population = population * 1e-6,
-    gdp = gdp * 1e-9,
-    gerd = gerd * 1e-6)
-
-lm_pro <- lm(log(projects + 0.01) ~ log(proposals + 0.01), data = country_stats)
-lm_pop <- lm(log(projects + 0.01) ~ log(population), data = country_stats)
-lm_gdp <- lm(log(projects + 0.01) ~ log(gdp), data = country_stats)
-lm_gerd <- lm(log(projects + 0.01) ~ log(gerd), data = country_stats)
-
-r_squared <- tibble(
-  indicator = factor(
-    c("Number of Proposals",
-      "Population (m)", 
-      "Annual GDP ($bn)", 
-      "Annual GERD ($m)"), 
-    levels = c(
-      "Number of Proposals",
-      "Population (m)", 
-      "Annual GDP ($bn)", 
-      "Annual GERD ($m)")),
-  rs = c(summary(lm_pro)$r.squared,
-         summary(lm_pop)$r.squared,
-         summary(lm_gdp)$r.squared,
-         summary(lm_gerd)$r.squared)) %>%
-  mutate(
-    rs = sprintf("R^2==%.02f", rs),
-    eu28 = TRUE)
-```
+### Participation
 
 ```{r indicators, fig.asp = .85}
-# source(here("R", "extra-data.R"))
-# wbdata <- get_indicators(pull(distinct(participation, iso2c)))
+source(here("R", "indicators.R"))
 
+summary_stats <- participation %>%
+  group_by(iso2c, projects) %>%
+  summarise(n = sum(n, na.rm = TRUE)) %>%
+  pivot_wider(names_from = projects, values_from = n) %>%
+  mutate(eu28 = countrycode(iso2c, "iso2c", "eu28", nomatch = "Non-EU"))
 
-country_stats %>%
-  pivot_longer(
-    c("gdp", "gerd", "population", "proposals"),
-    names_to = "indicator",
-    values_to = "value") %>%
-  mutate(
-    indicator = fct_recode(indicator, 
-                           `Number of Proposals` = "proposals",
-                           `Population (m)` = "population",
-                           `Annual GDP ($bn)` = "gdp",
-                           `Annual GERD ($m)` = "gerd"),
-    indicator = fct_relevel(indicator,
-                            "Number of Proposals", 
-                            "Population (m)", 
-                            "Annual GDP ($bn)",
-                            "Annual GERD ($m)")) %>%
-  filter(projects > 1) %>% # un-clutter the plot
-  ggplot(aes(value, projects, label = eurostat, col = eu28)) +
-  scale_color_tableau(direction = -1, guide = guide_legend(reverse = TRUE)) +
-  geom_smooth(method = "lm", se = FALSE, col = "gray75", size = .8) +
-  geom_point(size = 1.5, alpha = .5) +
-  geom_text_repel(size = 3, show.legend = FALSE) + 
-  geom_text(
-    data = r_squared,
-    aes(x = Inf, y = 1, label = rs),
-    hjust = 1.225, vjust = -.35, parse = TRUE,
-    col = "gray40", size = 3.5, fontface = "bold.italic") +
-  scale_y_log10(labels = number_format(accuracy = 1)) + 
-  scale_x_log10(labels = number_format(accuracy = 1)) + 
-  facet_wrap(indicator~., scales = "free", nc = 2) +
-  labs(title = "Participation Correlates Best with GERD (in log-scale)", 
-       caption = "Source: ERC, World Bank",
-       x = element_blank(),
-       y = "Number of Grants") +
-  theme(plot.title.position = "plot",
-        legend.position = c(.17, .96),
-        legend.direction = "horizontal",
-        legend.background = element_rect(fill = alpha("white", .4)))
+summary_stats %>%
+  select(x = evaluated, y = granted, iso2c, eu28) %>%
+  filter(y > 1) %>%
+  plot_indicators("Evaluated Projects", 
+                  caption = "Source: ERC website")
+```
+
+### GDP
+
+```{r gdp, fig.asp = .85}
+summary_stats <- summary_stats %>%
+  left_join(get_indicators(pull(summary_stats, iso2c)), by = "iso2c")
+
+summary_stats %>%
+  select(x = gdp, y = granted, iso2c, eu28) %>%
+  mutate(x = x * 1e-9) %>%
+  filter(y > 1) %>%
+  plot_indicators("Annual GDP ($bn)")
+```
+
+### GERD
+
+```{r gdp, fig.asp = .85}
+summary_stats %>%
+  select(x = gerd, y = granted, iso2c, eu28) %>%
+  mutate(x = x * 1e-6) %>%
+  filter(y > 1) %>%
+  plot_indicators("Annual GERD ($m)")
 ```
 
 # Activity and success
