@@ -7,7 +7,7 @@ spec:
     funding_scheme: []
     research_domain: []
     research_panel: []
-    funded: []
+    projects: []
     'n': []
   default: []
   skip: 1
@@ -58,7 +58,10 @@ fields:
   - SH4
   - SH5
   - SH6
-- name: funded
-  type: boolean
+- name: projects
+  type: string
+  levels:
+  - evaluated
+  - granted
 - name: 'n'
   type: integer

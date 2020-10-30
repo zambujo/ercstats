@@ -10,26 +10,17 @@ The [European Research Council (ERC)](https://erc.europa.eu) provides country st
 
 ### Data dictionary
 
-The first 6 rows are shown below:
-|iso2c | call_year|funding_scheme |research_domain |research_panel |funded |  n|
-|:-----|---------:|:--------------|:---------------|:--------------|:------|--:|
-|AL    |      2008|AdG            |PE              |PE2            |TRUE   |  0|
-|AL    |      2008|AdG            |PE              |PE2            |FALSE  |  1|
-|AL    |      2011|AdG            |SH              |SH6            |TRUE   |  0|
-|AL    |      2011|AdG            |SH              |SH6            |FALSE  |  1|
-|AL    |      2018|StG            |PE              |PE7            |TRUE   |  0|
-|AL    |      2018|StG            |PE              |PE7            |FALSE  |  1|
+|Variable        |Class     |Description                       |
+|:---------------|:---------|:---------------------------------|
+|iso2c           |character |`iso2c` country code              |
+|call_year       |integer   |`2007` - `2020`                   |
+|funding_scheme  |factor    |`StG`, `CoG`, `AdG`, `PoC`, `SyG` |
+|research_domain |factor    |`LS`, `PE`, `SH`                  |
+|research_panel  |factor    |`LS1` - `SH6`                     |
+|projects        |factor    |`evaluated`, `granted`            |
+|n               |integer   |number of projects                |
 
-with the following definition:
-|Variable        |Class   |Description                 |
-|:---------------|:-------|:---------------------------|
-|iso2c           |string  |Country `iso2c` code        |
-|call_year       |integer |2007 to 2020                |
-|funding_scheme  |string  |StG, CoG, AdG, PoC, SyG     |
-|research_domain |string  |LS, PE, SH                  |
-|research_panel  |string  |LS1 to SH6                  |
-|funded          |boolean |                            |
-|n               |integer |Number of projects          |
+> Numbers of evaluated projects can be lower than granted projects because of country mobility during the time lag between evaluation and approval of projects.
 
 ## Tree
 

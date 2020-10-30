@@ -17,6 +17,7 @@ df <- df %>%
   mutate(
     n = as.integer(n),
     call_year = as.integer(call_year),
+    projects = fct_relevel(projects, "evaluated", "granted"),
     research_domain = fct_relevel(research_domain, "LS", "PE", "SH"),
     research_panel = fct_relevel(research_panel, panels_in_order),
     funding_scheme = fct_relevel(funding_scheme,
