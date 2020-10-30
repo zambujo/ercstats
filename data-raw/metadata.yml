@@ -1,0 +1,64 @@
+profile: tabular-data-package
+name: '.'
+spec:
+  cols:
+    iso2c: []
+    call_year: []
+    funding_scheme: []
+    research_domain: []
+    research_panel: []
+    funded: []
+    'n': []
+  default: []
+  skip: 1
+fields:
+- name: iso2c
+  type: string
+- name: call_year
+  type: integer
+- name: funding_scheme
+  type: string
+  levels:
+  - StG
+  - CoG
+  - AdG
+  - PoC
+  - SyG
+- name: research_domain
+  type: string
+  levels:
+  - LS
+  - PE
+  - SH
+- name: research_panel
+  type: string
+  levels:
+  - LS1
+  - LS2
+  - LS3
+  - LS4
+  - LS5
+  - LS6
+  - LS7
+  - LS8
+  - LS9
+  - PE1
+  - PE2
+  - PE3
+  - PE4
+  - PE5
+  - PE6
+  - PE7
+  - PE8
+  - PE9
+  - PE10
+  - SH1
+  - SH2
+  - SH3
+  - SH4
+  - SH5
+  - SH6
+- name: funded
+  type: boolean
+- name: 'n'
+  type: integer

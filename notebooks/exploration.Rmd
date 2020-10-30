@@ -55,9 +55,12 @@ options(dplyr.summarise.inform = FALSE)
 ```{r data-enrichment, include=FALSE}
 # ERC data on country participation (H2020)
 participation <- 
-  here("data", "erc_country_stats.rds.bz2") %>%
+  here("data", "erc_country_stats.rds") %>%
   read_rds() %>%
-  filter(call_year > 2013)
+  # fp9 only
+  filter(call_year > 2013) %>%
+  # back compatibility
+  mutate(country = countrycode(iso2c, "iso2c", "country.name.en"))
 
 # country label conversion for world bank data
 countries <- 
