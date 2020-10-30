@@ -23,8 +23,7 @@ library(here)
 library(countrycode)
 library(conflicted)
 
-# library(ggflags)
-# library(ggbump)
+
 # library(ggrepel)
 # library(ggsci)
 # library(ggthemes)
@@ -42,9 +41,6 @@ participation <-
   here("data", "erc_country_stats.rds") %>%
   read_rds() %>%
   filter(call_year > 2013)
-
-# source(here("R", "extra-data.R"))
-# wbdata <- get_indicators(pull(distinct(participation, iso2c)))
 ```
 
 # Summary
@@ -76,7 +72,7 @@ On the whole, the distribution of the number of proposals by domain is comparabl
 
 ### All
 
-```{r summary, fig.asp=.75}
+```{r overview, fig.asp=.75}
 source(here("R", "overview.R"))
 participation %>%
   plot_participation()
@@ -84,7 +80,7 @@ participation %>%
 
 ### LS
 
-```{r ls, fig.asp=.75}
+```{r overview-ls, fig.asp=.75}
 participation %>%
   filter(research_domain == "LS") %>%
   plot_participation(title = "Country Participation in LS")
@@ -92,7 +88,7 @@ participation %>%
 
 ### PE
 
-```{r pe, fig.asp=.75}
+```{r overview-pe, fig.asp=.75}
 participation %>%
   filter(research_domain == "PE") %>%
   plot_participation(title = "Country Participation in PE")
@@ -100,90 +96,57 @@ participation %>%
 
 ### SH
 
-```{r sh, fig.asp=.75}
+```{r overview-sh, fig.asp=.75}
 participation %>%
   filter(research_domain == "SH") %>%
   plot_participation(title = "Country Participation in SH")
 ```
 
-## Rankings of top participating countries
+## Rankings of top participating countries  {.tabset .tabset-fade .tabset-pills}
 
 Comparison of the rankings by numbers of proposals and projects reveals consistent drops for Spain and Italy. By contrast, Germany, Israel, and Switzerland typically show better rankings for projects than for proposals.
 
+### All
+
 ```{r rankings, fig.asp=.75}
-my_bump_theme <- theme_minimal() +
-  theme(
-    axis.text.x = element_text(face = "bold"),
-    axis.text.y = element_blank(),
-    plot.title.position = "plot",
-    legend.position = "none",
-    panel.grid = element_blank())
+source(here("R", "rankings.R"))
+participation %>% 
+  get_rankings() %>%
+  plot_rankings()
+```
 
-get_top_ten <- function(df, what, top = 10) {
-  df %>%
-    group_by(country) %>%
-    summarise(n = sum(n)) %>%
-    arrange(desc(n)) %>%
-    select(country) %>%
-    head(top) %>%
-    mutate(type = what, rank = row_number())  
-}
+### LS
 
-get_rankings <- function(df, ...) {
-  from_to <- c("Proposals", "Projects")
-  bind_rows(
-    df %>% get_top_ten(from_to[1]),
-    df %>% filter(funded) %>% get_top_ten(from_to[2])) %>%
-  mutate(
-    type = factor(type, levels = from_to),
-    x = as.numeric(type),
-    iso2c = str_to_lower(countrycode(country, "country.name", "iso2c")))
-}
+```{r rankings-ls, fig.asp=.75}
+participation %>%
+  filter(research_domain == "LS") %>%
+  get_rankings() %>%
+  plot_rankings(title = "Ranking of top-10 participating countries in LS")
+```
 
-rankings <- bind_rows(
-  participation %>%
-    get_rankings(),
-  participation %>%
-    filter(!is.na(research_domain)) %>%
-    group_split(research_domain) %>%
-    map_df(get_rankings)) %>%
-  mutate(research_domain = rep(c("All", "LS", "PE", "SH"), each = 20))
+### PE
 
-rankings %>% 
-  ggplot(aes(x, rank, color = country)) +
-  geom_bump(size = 2, alpha = .4) +
-  geom_point(size = 3, alpha = .7) +
-  geom_text(data = tibble(xpos = rep(.92, 10), 
-                          ypos = 1:10, 
-                          txt = as.character(1:10)),
-            aes(x = xpos, y = ypos, label = txt), 
-            size = 3, color = "gray40") +
-  geom_flag(
-    data = filter(rankings, x == min(x)),
-    aes(country = iso2c)) +
-  geom_flag(
-    data = filter(rankings, x == max(x)),
-    aes(country = iso2c)) +
-  scale_y_reverse(breaks = 1:10, 
-                  labels = number_format(accuracy = 1)) +
-  scale_x_continuous(
-    expand = c(0.02, 0, .1, 0),
-    breaks = unique(pull(rankings, x)),
-    labels = rev(levels(pull(rankings, type)))) +
-  labs(
-    title = "Countries' rankings in translating from proposals to projects",
-    subtitle = "Top-ranked countries by domain",
-    x = element_blank(),
-    y = element_blank()) +
-  facet_wrap(~research_domain) + 
-  my_bump_theme
+```{r rankings-ls, fig.asp=.75}
+participation %>%
+  filter(research_domain == "PE") %>%
+  get_rankings() %>%
+  plot_rankings(title = "Ranking of top-10 participating countries in PE")
+```
+
+### SH
+
+```{r rankings-ls, fig.asp=.75}
+participation %>%
+  filter(research_domain == "SH") %>%
+  get_rankings() %>%
+  plot_rankings(title = "Ranking of top-10 participating countries in SH")
 ```
 
 ## Participation versus GERD and GDP 
 
 The observed inequality in country participation is largely mirrored in countries' GDP and GERD levels.  That applies for both EU28 and non-EU28 participants.
 
-```{r rsquared, include=FALSE}
+```{r deprecated-rsquared, eval=FALSE}
 projects <- 
   participation %>%
   filter(funded) %>%
@@ -232,6 +195,10 @@ r_squared <- tibble(
 ```
 
 ```{r indicators, fig.asp = .85}
+# source(here("R", "extra-data.R"))
+# wbdata <- get_indicators(pull(distinct(participation, iso2c)))
+
+
 country_stats %>%
   pivot_longer(
     c("gdp", "gerd", "population", "proposals"),
