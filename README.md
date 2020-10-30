@@ -13,12 +13,12 @@ The [European Research Council (ERC)](https://erc.europa.eu) provides country st
 The first 6 rows are shown below:
 |iso2c | call_year|funding_scheme |research_domain |research_panel |funded |  n|
 |:-----|---------:|:--------------|:---------------|:--------------|:------|--:|
+|AL    |      2008|AdG            |PE              |PE2            |TRUE   |  0|
+|AL    |      2008|AdG            |PE              |PE2            |FALSE  |  1|
+|AL    |      2011|AdG            |SH              |SH6            |TRUE   |  0|
+|AL    |      2011|AdG            |SH              |SH6            |FALSE  |  1|
 |AL    |      2018|StG            |PE              |PE7            |TRUE   |  0|
 |AL    |      2018|StG            |PE              |PE7            |FALSE  |  1|
-|AL    |      2018|StG            |SH              |SH1            |TRUE   |  0|
-|AL    |      2018|StG            |SH              |SH1            |FALSE  |  1|
-|AT    |      2014|StG            |LS              |LS1            |TRUE   |  0|
-|AT    |      2014|StG            |LS              |LS1            |FALSE  |  4|
 
 with the following definition:
 |Variable        |Class   |Description                 |
