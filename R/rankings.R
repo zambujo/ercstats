@@ -1,12 +1,3 @@
-library(dplyr)
-library(stringr)
-library(ggplot2)
-library(scales)
-library(ggflags)
-library(ggbump)
-options(dplyr.summarise.inform = FALSE)
-
-
 get_rankings <- function(df, top = 10) {
   df %>%
     group_by(iso2c, projects) %>%

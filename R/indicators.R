@@ -1,12 +1,3 @@
-library(dplyr)
-library(tidyr)
-library(wbstats)
-library(ggplot2)
-library(scales)
-library(ggrepel)
-options(dplyr.summarise.inform = FALSE)
-
-
 #' Calculate average values per country over a period of time
 #'
 #' @param iso2c Character vector of country (or region).

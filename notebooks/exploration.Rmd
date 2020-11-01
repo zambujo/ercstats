@@ -17,28 +17,18 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-library(tidyverse)
-library(knitr)
 library(here)
-library(countrycode)
-library(conflicted)
+source(here("R", "packages.R"))
 
-
-
-# library(ggsci)
-# library(ggthemes)
-# library(ggforce)
-
-conflict_prefer("filter", "dplyr")
 opts_chunk$set(
   echo = FALSE, 
   warning = FALSE, 
   message = FALSE)
-options(dplyr.summarise.inform = FALSE)
 
 # ERC data on country participation (H2020 only)
 participation <- 
-  here("data", "erc_country_stats.rds") %>%
+  here("data", 
+  "erc_country_stats.rds") %>%
   read_rds() %>%
   filter(call_year > 2013)
 ```
@@ -220,19 +210,6 @@ calculate_figures <- function(..., country_rank, df = participation) {
 
 }
 
-get_indexes <- function(..., country_rank, within_selection) {
-  country_slice <- slice(country_rankings, country_rank)
-  self_name <- country_slice %>% pull("country")
-  self <- calculate_figures(..., country_rank = country_rank)
-  others_rank <- (within_selection)[-country_rank]
-  others <- calculate_figures(..., country_rank = others_rank)
-  self %>% 
-    mutate(
-      activity = share_applications / pull(others, share_applications),
-      success = success_rate / pull(others, success_rate)) %>%
-      select(-(grants:success_rate)) %>% mutate(country = self_name) %>%
-      select(last_col(), everything())
-}
 
 plot_indexes <- function(df, 
                          facet_factor, 

@@ -1,8 +1,3 @@
-library(dplyr)
-library(ggplot2)
-library(scales)
-options(dplyr.summarise.inform = FALSE)
-
 #' Bar-plot of country participation by evaluated and granted projects
 #'
 #' @param df A tibble. 
