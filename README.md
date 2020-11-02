@@ -1,7 +1,7 @@
 # ERC Statistics
 
 <!-- badges: start -->
-[![Launch Rstudio Binder](http://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/zambujo/ercstats/master?urlpath=rstudio)
+[![Launch Rstudio Binder](http://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/zambujo/ercstats/main?urlpath=rstudio)
 <!-- badges: end -->
 
 ## About
