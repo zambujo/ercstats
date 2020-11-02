@@ -66,7 +66,7 @@ plot_indicators <- function(df,
     theme_minimal() +
     theme(
       plot.title.position = "plot",
-      legend.position = c(.17, .96),
+      legend.position = c(.1, .96),
       legend.direction = "horizontal",
       legend.key.size = unit(4, "mm"),
       legend.background = element_rect(

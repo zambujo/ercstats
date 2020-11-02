@@ -116,7 +116,7 @@ participation %>%
 
 ### PE
 
-```{r rankings-ls, fig.asp=.75}
+```{r rankings-pe, fig.asp=.75}
 participation %>%
   filter(research_domain == "PE") %>%
   get_rankings() %>%
@@ -125,7 +125,7 @@ participation %>%
 
 ### SH
 
-```{r rankings-ls, fig.asp=.75}
+```{r rankings-sh, fig.asp=.75}
 participation %>%
   filter(research_domain == "SH") %>%
   get_rankings() %>%
@@ -169,7 +169,7 @@ summary_stats %>%
 
 ### GERD
 
-```{r gdp, fig.asp = .85}
+```{r gerd, fig.asp = .85}
 summary_stats %>%
   select(x = gerd, y = granted, iso2c, eu28) %>%
   mutate(x = x * 1e-6) %>%
@@ -182,67 +182,6 @@ summary_stats %>%
 The **activity index** of a country is the proportion of proposals of the country in a domain divided by the average proportion of proposals of other countries in that same domain.
 
 The **success index** of a country is the success rate of the country in a domain divided by the average success rate of other countries in that same domain.
-
-```{r indices, include=FALSE}
-country_rankings <- 
-  participation %>%
-  group_by(country) %>%
-  summarise(n = sum(n)) %>%
-  arrange(desc(n)) %>%
-  select(country)
-
-#! depends on country_participation being ordered by number of submissions
-calculate_figures <- function(..., country_rank, df = participation) {
-  by <- enquos(..., .named = TRUE)
-  df %>% 
-    filter(funding_scheme %in% c("StG", "CoG", "AdG")) %>%
-    semi_join(slice(country_rankings, country_rank), by = "country") %>%
-    group_by(!!!by, funded) %>%
-    summarise(grants = sum(n, na.rm = TRUE)) %>%
-    mutate(applications = sum(grants, na.rm = TRUE)) %>%
-    ungroup() %>%
-    filter(funded) %>%
-    select(-funded) %>%
-    mutate(
-      share_applications = 100 * applications / sum(applications),
-      share_grants = 100 * grants / sum(grants),
-      success_rate = 100 * grants / applications)
-
-}
-
-
-plot_indexes <- function(df, 
-                         facet_factor, 
-                         title, 
-                         subtitle,
-                         nc = 3) {
-  df %>%
-    left_join(countries, on = "country") %>%
-    ggplot(aes(x = activity, y = success, label = eurostat, col = eurostat)) +
-    geom_hline(yintercept = 1, color = "white", size = 2, alpha = .5) +
-    geom_vline(xintercept = 1, color = "white", size = 2, alpha = .5) +
-    geom_hline(yintercept = 1, 
-               color = "black", linetype = "longdash",
-               size = .3, alpha = .3) +
-    geom_vline(xintercept = 1, 
-               color = "black", linetype = "longdash",
-               size = .3, alpha = .3) +
-    scale_color_tableau() +
-    geom_point(size = 2, alpha = 1, shape = 1) +
-    geom_point(size = 2, alpha = .5) +
-    geom_text_repel() +
-    labs(
-      title = title,
-      subtitle = subtitle,
-      caption = "Source: ERC",
-      x = "Activity Index",
-      y = "Success Index") +
-    facet_wrap(as.formula(paste("~", facet_factor)), ncol = nc) +
-    theme(
-      plot.title.position = "plot",
-      legend.position = "none")
-}
-```
 
 ## Figures by domain
 
@@ -257,44 +196,62 @@ Comparison of the activity and success indexes among the 10 top participating co
     + both the UK and the Netherlands have been outstandingly active and successful.
 
 ```{r top-ten-by-domain, fig.asp=.45}
-map_df(
-  1:10, 
-  function(n) 
-    get_indexes(research_domain, 
-                country_rank = n, 
-                within_selection = 1:10)) %>%
-  plot_indexes(
-    facet_factor = "research_domain",
-    title = "Activity and Success by Domain",
-    subtitle = "Among the 10 Top Participating Countries")
+source(here("R", "indices.R"))
+
+countries_1to10 <- 
+  participation %>%
+    filter(projects == "evaluated") %>%
+    group_by(iso2c) %>%
+    summarise(n = sum(n)) %>%
+    ungroup() %>%
+    top_n(10, n) %>%
+    pull(iso2c)
+
+indices_1to10 <- get_indices(participation, 
+                             research_domain, 
+                             countries_1to10)
+
+plot_indices(indices_1to10,
+             research_domain,
+             title = "Activity and Success by Domain",
+             subtitle = "Among the 10 Top Participating Countries")
 ```
 
 Among mid-range participating countries (compared among themselves):
 
 * **LS** 
-    + Austria has been outstandingly successful but only moderately active;
+  + Austria has been outstandingly successful but only moderately active;
 * **PE** 
-    + Norway has been relatively successful but not active;
-    + Poland, Greece, Czechia, and Turkey show high activity but low success;
+  + Norway has been relatively successful but not active;
+  + Poland, Greece, Czechia, and Turkey show high activity but low success;
 * **SH**
-    + Ireland has been both active and relatively successful;
-    + Austria has been relatively successful but not so active;
-    + Norway has been extremely active, but only moderately successful.
+  + Ireland has been both active and relatively successful;
+  + Austria has been relatively successful but not so active;
+  + Norway has been extremely active, but only moderately successful.
 
 ```{r eleven-twenty-by-domain, fig.asp=.45}
-map_df(
-  11:20, 
-  function(n)
-    get_indexes(research_domain,
-                country_rank = n, 
-                within_selection = 11:20)) %>%
-  plot_indexes(
-    facet_factor = "research_domain",
-    title = "Activity and Success by Domain",
-    subtitle = "Among the 11-20 Top Participating Countries")
+countries_11to20 <- 
+  participation %>%
+    filter(projects == "evaluated") %>%
+    group_by(iso2c) %>%
+    summarise(n = sum(n)) %>%
+    ungroup() %>%
+    top_n(20, n) %>%
+    arrange(n) %>%
+    pull(iso2c) %>%
+  head(10)
+
+indices_11to20 <- get_indices(participation, 
+                              research_domain, 
+                              countries_11to20)
+
+plot_indices(indices_11to20,
+             research_domain,
+             title = "Activity and Success by Domain",
+             subtitle = "Among the 11-20 Top Participating Countries")
 ```
 
-## Figures by panel
+## Figures by panel  {.tabset .tabset-fade .tabset-pills}
 
 Among the 10 top participating countries:
 
@@ -302,24 +259,49 @@ Among the 10 top participating countries:
 * Switzerland stands out in PE8 (products and processes engineering) and PE9 (universe sciences);
 * The Netherlands stands out in SH2 (institutions, values, beliefs, and behavior) and SH3 (environment, space, and population).
 
-```{r top-ten-ls-panel, fig.asp=1.8}
-map_df(
-  1:10, 
-  function(n) 
-    get_indexes(research_panel, 
-                country_rank = n, 
-                within_selection = 1:10)) %>%
-  mutate(
-    research_panel = fct_relevel(
-      research_panel,
-      c("LS1", "LS2", "LS3", "LS4", "LS5", "LS6", "LS7", "LS8", "LS9",
-        "PE1", "PE2", "PE3", "PE4", "PE5", "PE6", "PE7", "PE8", "PE9", "PE10",
-        "SH1", "SH2", "SH3", "SH4", "SH5", "SH6"))) %>%
-  plot_indexes(
-    facet_factor = "research_panel",
-    title = "Activity and Success by Panel",
-    subtitle = "Among 10 Top Participating Countries",
-    nc = 4)
+### LS
+
+```{r top-ten-ls-panel, fig.asp=1}
+indices <- participation %>%
+  filter(research_domain == "LS") %>%
+  get_indices(research_panel,
+              countries_1to10)
+
+plot_indices(indices,
+             research_panel,
+             title = "Activity and Success in LS, by Panel",
+             subtitle = "Among the 10 Top Participating Countries",
+             nc = 4)
+```
+
+### PE
+
+```{r top-ten-pe-panel, fig.asp=1}
+indices <- participation %>%
+  filter(research_domain == "PE") %>%
+  get_indices(research_panel,
+              countries_1to10)
+
+plot_indices(indices,
+             research_panel,
+             title = "Activity and Success in PE, by Panel",
+             subtitle = "Among the 10 Top Participating Countries",
+             nc = 4)
+```
+
+### SH
+
+```{r top-ten-sh-panel, fig.asp=.715}
+indices <- participation %>%
+  filter(research_domain == "SH") %>%
+  get_indices(research_panel,
+              countries_1to10)
+
+plot_indices(indices,
+             research_panel,
+             title = "Activity and Success in SH, by Panel",
+             subtitle = "Among the 10 Top Participating Countries",
+             nc = 4)
 ```
 
 # See also

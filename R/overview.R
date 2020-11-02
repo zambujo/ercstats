@@ -42,7 +42,7 @@ plot_participation <- function(df,
     theme(
       plot.title.position = "plot",
       axis.ticks.y = element_blank(),
-      legend.position = c(.85, 1.05),
+      legend.position = c(.75, 1.05),
       legend.direction = "horizontal",
       legend.key.size = unit(4, "mm"),
       legend.background = element_rect(
