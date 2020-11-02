@@ -27,6 +27,12 @@ The [European Research Council (ERC)](https://erc.europa.eu) provides country st
 ```{bash}
 .
 ├── LICENSE
+├── R
+│   ├── indicators.R
+│   ├── indices.R
+│   ├── overview.R
+│   ├── packages.R
+│   └── rankings.R
 ├── README.md
 ├── data
 │   └── erc_country_stats.rds
@@ -36,7 +42,6 @@ The [European Research Council (ERC)](https://erc.europa.eu) provides country st
 │   └── prepare.R
 ├── docs
 │   └── index.html
-├── ercstats.Rproj
 └── notebooks
     └── exploration.Rmd
 ```
