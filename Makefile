@@ -5,11 +5,10 @@ run: build
 	docker run -d -p 8787:8787 \
 		-e DISABLE_AUTH=true \
 		--name='ercstats' \
-		-v ${HOME}:/home/rstudio/hostdata \
 		ercstats;
 
 	sleep 3;
-	firefox 127.0.0.1:8787;
+	open http://127.0.0.1:8787;
 
 stop:
 	docker stop ercstats

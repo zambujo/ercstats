@@ -1,5 +1,10 @@
 FROM rocker/verse
 
+RUN mkdir /home/analysis
+RUN mkdir /home/analysis/R
+RUN mkdir /home/analysis/notebooks
+RUN mkdir /home/analysis/data
+
 ################
 #install linux deps
 ################
@@ -13,15 +18,19 @@ RUN apt-get update -y && \
 ################
 
 RUN R -e "install.packages('remotes'); \
-remotes::install_github('r-lib/conflicted'); \
-remotes::install_github('vincentarelbundock/countrycode'); \
-remotes::install_github('leeper/csvy'); \
-remotes::install_github('r-lib/fs'); \
-remotes::install_github('davidsjoberg/ggbump'); \
+install.packages('conflicted'); \
+install.packages('countrycode'); \
+install.packages('csvy'); \
+install.packages('fs'); \
+install.packages('ggbump'); \
+install.packages('ggrepel'); \
+install.packages('here'); \
+install.packages('jsonlite'); \
+install.packages('scales'); \
+install.packages('yaml'); \
 remotes::install_github('rensa/ggflags'); \
-remotes::install_github('slowkow/ggrepel'); \
-remotes::install_github('r-lib/here'); \
-remotes::install_github('jeroen/jsonlite'); \
-remotes::install_github('r-lib/scales'); \
-remotes::install_github('nset-ornl/wbstats'); \
-remotes::install_github('viking/r-yaml');"
+remotes::install_github('nset-ornl/wbstats');"
+
+COPY R/*.R /home/analysis/R/
+COPY notebooks/*.Rmd /home/analysis/notebooks/
+COPY data/*.rds /home/analysis/data/
