@@ -1,9 +1,5 @@
 # ERC Statistics
 
-<!-- badges: start -->
-[![Launch Rstudio Binder](http://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/zambujo/ercstats/main?urlpath=rstudio)
-<!-- badges: end -->
-
 ## About
 
 An exploration and visualization of the participation of ERC member countries in FP8 using R.
@@ -56,8 +52,4 @@ Distributed under the MIT License.
 
 ## Acknowledgments
 
-- {[countrycode](https://github.com/vincentarelbundock/countrycode)}
-- {[ggflags](https://github.com/rensa/ggflags)}
-- {[ggbump](https://github.com/davidsjoberg/ggbump)}
-- {[wbstats](https://github.com/nset-ornl/wbstats)}
-- {[holepunch](https://github.com/karthik/holepunch)}
+See list of packages in [DESCRIPTION file](./DESCRIPTION).
