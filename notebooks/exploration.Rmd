@@ -35,6 +35,48 @@ participation <-
 
 # Summary
 
+```{r, include=FALSE}
+participation %>% 
+  filter(projects == "evaluated") %>%
+  group_by(iso2c) %>%
+  summarise(n = sum(n)) %>%
+  ungroup() %>%
+  arrange(n) %>%
+  mutate(cum_sum = cumsum(n)) %>%
+  print(n = 41)
+
+participation %>% 
+  filter(projects == "granted") %>%
+  group_by(iso2c) %>%
+  summarise(n = sum(n)) %>%
+  ungroup() %>%
+  arrange(n) %>%
+  mutate(cum_sum = cumsum(n)) %>%
+  print(n = 41)
+
+participation %>% 
+  filter(projects == "evaluated",
+         research_domain == "SH") %>%
+  group_by(iso2c) %>%
+  summarise(n = sum(n)) %>%
+  ungroup() %>%
+  arrange(n) %>%
+  mutate(cum_sum = cumsum(n)) %>%
+  print(n = 41)
+
+participation %>% 
+  filter(projects == "granted",
+         research_domain == "SH") %>%
+  group_by(iso2c) %>%
+  summarise(n = sum(n)) %>%
+  ungroup() %>%
+  arrange(n) %>%
+  mutate(cum_sum = cumsum(n)) %>%
+  print(n = 41)
+
+```
+
+
 * The analysis shows uneven distributions of country participation measured by both proposals and projects. 
 
 * Inequalities visible in areas such as GDP and GERD are reproduced in countries' participation rates.
@@ -42,7 +84,7 @@ participation <-
 * Comparing the distribution of proposals and projects across countries, the analysis shows that the distribution of projects is more uneven than that of proposals.
 
 * Noteworthy findings for individual countries:
-    + the UK accounted for nearly 20% of proposals and projects. Out of the 43 participating countries, the UK submitted the same amount of proposals as the 32 lowest participating countries and was awarded as many projects as the 34 lowest participating ones;
+    + the UK accounted for nearly 20% of proposals and projects. Out of the 41 participating countries, the UK submitted the same amount of proposals as the 30 lowest participating countries and was awarded as many projects as the 32 lowest participating ones;
     + Israel and Switzerland had outstanding success  in LS and PE;
     + The Netherlands has been remarkably successful in SH.
 
@@ -54,11 +96,11 @@ Figures from [ERC website](https://erc.europa.eu/projects-figures/statistics).  
 
 ## Overview {.tabset .tabset-fade .tabset-pills}
 
-The number of proposals by country ranges from only a few (e.g. in Moldova, Albania, Armenia, or Tunisia) to several thousands (e.g. in the UK, Germany, France, or Italy).  Out of the 43 participating countries, 10 have not been awarded any project.
+The number of proposals by country ranges from only a few (e.g. in Moldova, Albania, Armenia, or Tunisia) to several thousands (e.g. in the UK, Germany, France, or Italy).  Out of the 41 participating countries, 9 have not been awarded any project.
 
-Overall, the UK has been the most active country. To date, it accounts for 18% of the proposals and 19% of the projects.  Germany and France complete the podium.
+Overall, the UK has been the most active country. To date, it accounts for 17.2% of the proposals and 18.4% of the projects.  Germany and France complete the podium.
 
-On the whole, the distribution of the number of proposals by domain is comparable to that of all domains.  The UK has been noticeably active in SH where it submitted more than double the number of proposals than the second most active country.  In total, in SH, the UK submitted 23% of the proposals and was awarded 29% of the projects.
+On the whole, the distribution of the number of proposals by domain is comparable to that of all domains.  The UK has been noticeably active in SH where it submitted more than double the number of proposals than the second most active country.  In total, in SH, the UK submitted 21.9% of the proposals and was awarded 26.4% of the projects.
 
 ### All
 
@@ -185,7 +227,7 @@ The **success index** of a country is the success rate of the country in a domai
 
 ## Figures by domain
 
-Comparison of the activity and success indexes among the 10 top participating countries provides a number of interesting individual observations:
+Comparison of the activity and success indexes of the 10 top participating countries among themselves provides a number of interesting individual observations:
 
 * **LS**
     + Israel, Switzerland, and Germany have been outstandingly active and successful;
@@ -197,9 +239,7 @@ Comparison of the activity and success indexes among the 10 top participating co
 
 ```{r top-ten-by-domain, fig.asp=.45}
 source(here("R", "indices.R"))
-
-countries_1to10 <- 
-  participation %>%
+countries <- participation %>%
     filter(projects == "evaluated") %>%
     group_by(iso2c) %>%
     summarise(n = sum(n)) %>%
@@ -207,57 +247,23 @@ countries_1to10 <-
     top_n(10, n) %>%
     pull(iso2c)
 
-indices_1to10 <- get_indices(participation, 
-                             research_domain, 
-                             countries_1to10)
-
-plot_indices(indices_1to10,
+indices <- get_indices(participation, 
+                       research_domain, 
+                       countries)
+plot_indices(indices,
              research_domain,
              title = "Activity and Success by Domain",
              subtitle = "Among the 10 Top Participating Countries")
 ```
 
-Among mid-range participating countries (compared among themselves):
-
-* **LS** 
-  + Austria has been outstandingly successful but only moderately active;
-* **PE** 
-  + Norway has been relatively successful but not active;
-  + Poland, Greece, Czechia, and Turkey show high activity but low success;
-* **SH**
-  + Ireland has been both active and relatively successful;
-  + Austria has been relatively successful but not so active;
-  + Norway has been extremely active, but only moderately successful.
-
-```{r eleven-twenty-by-domain, fig.asp=.45}
-countries_11to20 <- 
-  participation %>%
-    filter(projects == "evaluated") %>%
-    group_by(iso2c) %>%
-    summarise(n = sum(n)) %>%
-    ungroup() %>%
-    top_n(20, n) %>%
-    arrange(n) %>%
-    pull(iso2c) %>%
-  head(10)
-
-indices_11to20 <- get_indices(participation, 
-                              research_domain, 
-                              countries_11to20)
-
-plot_indices(indices_11to20,
-             research_domain,
-             title = "Activity and Success by Domain",
-             subtitle = "Among the 11-20 Top Participating Countries")
-```
 
 ## Figures by panel  {.tabset .tabset-fade .tabset-pills}
 
 Among the 10 top participating countries:
 
-* Israel stands out in LS2 (genetics, genomics, bioinformatics, and systems biology) and PE1 (mathematics);
-* Switzerland stands out in PE8 (products and processes engineering) and PE9 (universe sciences);
-* The Netherlands stands out in SH2 (institutions, values, beliefs, and behavior) and SH3 (environment, space, and population).
+* Israel stands out in LS2 (systems biology), PE1 (mathematics), and PE6 (computer science);
+* Switzerland stands out in LS5 (neuroscience) and PE10 (earth science);
+* The Netherlands stands out in PE7 (systems and communication engineering) and SH3 (environment, space, and population).
 
 ### LS
 
@@ -265,7 +271,7 @@ Among the 10 top participating countries:
 indices <- participation %>%
   filter(research_domain == "LS") %>%
   get_indices(research_panel,
-              countries_1to10)
+              countries)
 
 plot_indices(indices,
              research_panel,
@@ -280,7 +286,7 @@ plot_indices(indices,
 indices <- participation %>%
   filter(research_domain == "PE") %>%
   get_indices(research_panel,
-              countries_1to10)
+              countries)
 
 plot_indices(indices,
              research_panel,
@@ -295,7 +301,7 @@ plot_indices(indices,
 indices <- participation %>%
   filter(research_domain == "SH") %>%
   get_indices(research_panel,
-              countries_1to10)
+              countries)
 
 plot_indices(indices,
              research_panel,
@@ -303,6 +309,41 @@ plot_indices(indices,
              subtitle = "Among the 10 Top Participating Countries",
              nc = 4)
 ```
+
+
+## Figures by domain for mid-range participating countries
+
+* **LS** 
+  + Austria has been outstandingly successful but only moderately active;
+* **PE** 
+  + Austria, again, has been outstandingly successful but only moderately active;
+  + Norway has been relatively successful but not active;
+  + Poland, Greece, Czechia, and Turkey show high activity but low success;
+* **SH**
+  + Ireland has been both active and relatively successful;
+  + Austria has been relatively successful but not so active;
+  + Norway has been extremely active, but only moderately successful.
+
+```{r eleven-twenty-by-domain, fig.asp=.45}
+countries <- participation %>%
+    filter(projects == "evaluated") %>%
+    group_by(iso2c) %>%
+    summarise(n = sum(n)) %>%
+    ungroup() %>%
+    top_n(20, n) %>%
+    arrange(n) %>%
+    pull(iso2c) %>%
+  head(10)
+
+indices <- get_indices(participation, 
+                       research_domain, 
+                       countries)
+plot_indices(indices,
+             research_domain,
+             title = "Activity and Success by Domain",
+             subtitle = "Among the 11-20 Top Participating Countries")
+```
+
 
 # See also
 
