@@ -31,6 +31,6 @@ install.packages('yaml'); \
 remotes::install_github('rensa/ggflags'); \
 remotes::install_github('nset-ornl/wbstats');"
 
-COPY R/*.R /home/analysis/R/
-COPY notebooks/*.Rmd /home/analysis/notebooks/
-COPY data/*.rds /home/analysis/data/
+COPY R/* /home/analysis/R/
+COPY notebooks/* /home/analysis/notebooks/
+COPY data/* /home/analysis/data/
