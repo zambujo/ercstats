@@ -1,5 +1,11 @@
-get_rankings <- function(df, top = 10) {
-  df %>%
+get_rankings <- function(data, top = 10) {
+  if (!("iso2c" %in% names(data)))
+    stop("iso2c column not found in data")
+  
+  if (!("projects" %in% names(data)))
+    stop("projects column not found in data")
+  
+  data %>%
     group_by(iso2c, projects) %>%
     summarise(n = sum(n)) %>%
     ungroup() %>%
@@ -16,16 +22,16 @@ get_rankings <- function(df, top = 10) {
 }
 
 
-plot_rankings <- function(df,
+plot_rankings <- function(data,
                           title = "Ranking of top-10 participating countries",
                           subtitle = "From evaluated to granted projects",
                           projects_from = "Evaluated",
                           projects_to = "Granted") {
-  ggplot(aes(projects, rank, color = iso2c), data = df) +
+  ggplot(aes(projects, rank, color = iso2c), data = data) +
     geom_bump(size = 2, alpha = .4) +
-    geom_flag(data = filter(df, projects == 1),
+    geom_flag(data = filter(data, projects == 1),
               aes(x = projects, y = rank, country = iso2c)) +
-    geom_flag(data = filter(df, projects == 2),
+    geom_flag(data = filter(data, projects == 2),
               aes(x = projects, y = rank, country = iso2c)) +
     scale_x_continuous(
       breaks = 1:2,
@@ -42,7 +48,7 @@ plot_rankings <- function(df,
       size = 3,
       color = "gray40"
     ) +
-    scale_y_reverse(breaks = 1:max(pull(df, rank)),
+    scale_y_reverse(breaks = 1:max(pull(data, rank)),
                     labels = number_format(accuracy = 1)) +
     labs(
       title = title,

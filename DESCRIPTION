@@ -1,0 +1,36 @@
+Type: Compendium
+Package: ercstats
+Title: Participation of ERC Member Countries in FP8 
+Version: 0.0.1
+Authors@R: 
+    person(given = "Joao",
+           family = "Martins",
+           role = c("aut", "cre"),
+           email = "joao.martins@gmx.net",
+           comment = c(ORCID = "0000-0001-7961-4280"))
+Description: An analysis of the participation of ERC member
+    countries in FP8.
+License: MIT
+Depends: 
+    conflicted,
+    countrycode,
+    csvy,
+    fs,
+    ggbump,
+    ggflags,
+    ggrepel,
+    here,
+    jsonlite,
+    knitr,
+    rmarkdown,
+    scales,
+    tidyverse,
+    wbstats,
+    yaml
+Remotes: 
+    davidsjoberg/ggbump,
+    leeper/csvy,
+    nset-ornl/wbstats,
+    rensa/ggflags
+Encoding: UTF-8
+LazyData: true

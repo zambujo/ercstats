@@ -32,7 +32,6 @@ self_indices <- function(data, col, iso2c_code, iso2c_codes) {
 #' @param data A tibble containing ERC country participation data.
 #' @param col Unquoted expression for the partitioning variable.
 #' @param iso2c_codes A string vector of country iso2c codes.
-#' @param long A logical value indicating whether to return data in long format.
 #'
 #' @return A tibble with activity and success indexes by country
 #' and by partitioning variable
@@ -42,7 +41,7 @@ self_indices <- function(data, col, iso2c_code, iso2c_codes) {
 #' df <- read_rds("data/erc_country_stats.rds")
 #' get_indices(df, research_domain, c("CH", "IL"))
 #' }
-get_indices <- function(data, col, iso2c_codes, long = FALSE) {
+get_indices <- function(data, col, iso2c_codes) {
   if (!("iso2c" %in% names(data)))
     stop("iso2c column not found in data")
   
@@ -59,19 +58,13 @@ get_indices <- function(data, col, iso2c_codes, long = FALSE) {
   data <- data %>%
     filter(!is.na(!!col))
   
-  result <-
-    iso2c_codes %>%
+  iso2c_codes %>%
     map_df(
       self_indices,
       data = data,
       col = !!col,
       iso2c_codes = iso2c_codes
     )
-  
-  if (long)
-    result <-
-    pivot_longer(result, c("activity", "success"), names_to = "index")
-  result
 }
 
 
