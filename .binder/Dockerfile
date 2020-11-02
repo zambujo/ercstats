@@ -7,6 +7,6 @@ USER ${NB_USER}
 
 
 
-RUN wget https://github.com/zambujo/ercstats/raw/master/DESCRIPTION && R -e "options(repos = list(CRAN = 'http://mran.revolutionanalytics.com/snapshot/2020-11-02/')); devtools::install_deps()"
+RUN wget https://github.com/zambujo/ercstats/raw/main/DESCRIPTION && R -e "options(repos = list(CRAN = 'http://mran.revolutionanalytics.com/snapshot/2020-11-02/')); devtools::install_deps()"
 
 RUN rm DESCRIPTION.1; exit 0
