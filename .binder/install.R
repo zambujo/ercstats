@@ -1,0 +1,17 @@
+install.packages(
+  "conflicted",
+  "countrycode",
+  "csvy",
+  "fs",
+  "ggbump",
+  "ggflags",
+  "ggrepel",
+  "here",
+  "jsonlite",
+  "knitr",
+  "rmarkdown",
+  "scales",
+  "tidyverse",
+  "wbstats",
+  "yaml"
+)
