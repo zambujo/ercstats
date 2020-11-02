@@ -26,7 +26,10 @@ The [European Research Council (ERC)](https://erc.europa.eu) provides country st
 
 ```{bash}
 .
+├── DESCRIPTION
+├── Dockerfile
 ├── LICENSE
+├── Makefile
 ├── R
 │   ├── indicators.R
 │   ├── indices.R
@@ -44,6 +47,13 @@ The [European Research Council (ERC)](https://erc.europa.eu) provides country st
 │   └── index.html
 └── notebooks
     └── exploration.Rmd
+```
+
+## Installation 
+
+🚧 Clone this repo and then run (requires docker):
+```bash
+make run
 ```
 
 ## License
