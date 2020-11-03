@@ -1,20 +1,17 @@
 build:
-	docker build --file=./Dockerfile --tag=ercstats .
+	docker build --rm --force-rm --file=./Dockerfile --tag=ercstats .
 
 run: build
-	docker run -d -p 8787:8787 \
+	docker run -d --rm -p 8787:8787 \
 		-e DISABLE_AUTH=true \
 		--name='ercstats' \
 		ercstats;
-
-	sleep 3;
-	open http://127.0.0.1:8787;
+		sleep 1;
+		open http://127.0.0.1:8787; # (Mac)
+		# firefox http://127.0.0.1:8787; # (Linux)
 
 stop:
 	docker stop ercstats
 
 start:
 	docker start ercstats
-
-remove: stop
-	docker rm ercstats
