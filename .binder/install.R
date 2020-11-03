@@ -1,17 +1,17 @@
-install.packages(
-  "conflicted",
-  "countrycode",
-  "csvy",
-  "fs",
-  "ggbump",
-  "ggflags",
-  "ggrepel",
-  "here",
-  "jsonlite",
-  "knitr",
-  "rmarkdown",
-  "scales",
-  "tidyverse",
-  "wbstats",
-  "yaml"
-)
+install.packages("conflicted")
+install.packages("countrycode")
+install.packages("csvy")
+install.packages("fs")
+install.packages("ggbump")
+install.packages("ggflags")
+install.packages("ggrepel")
+install.packages("here")
+install.packages("jsonlite")
+install.packages("knitr")
+install.packages("rmarkdown")
+install.packages("scales")
+install.packages("tidyverse")
+install.packages("wbstats")
+install.packages("yaml")
+install.packages("rmarkdown")
+install.packages("knitr")
