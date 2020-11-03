@@ -1,5 +1,9 @@
 # ERC Statistics
 
+<!-- badges: start -->
+[![Launch Rstudio Binder](http://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/zambujo/ercstats/main?urlpath=rstudio)
+<!-- badges: end -->
+
 ## About
 
 An exploration and visualization of the participation of ERC member countries in FP8 using R.
