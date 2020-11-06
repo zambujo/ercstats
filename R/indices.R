@@ -14,14 +14,14 @@ get_figures <- function(data, col, iso2c_codes) {
 self_indices <- function(data, col, iso2c_code, iso2c_codes) {
   col <- enquo(col)
   self <- get_figures(data,!!col, iso2c_code)
-  less <-
+  rest <-
     get_figures(data,!!col,
                 setdiff(iso2c_codes, iso2c_code))
   self %>%
     select(!!col) %>%
     bind_cols(tibble(
-      activity = pull(self, shares) / pull(less, shares),
-      success = pull(self, success) / pull(less, success)
+      activity = pull(self, shares) / pull(rest, shares),
+      success = pull(self, success) / pull(rest, success)
     )) %>%
     mutate(iso2c = iso2c_code)
 }
