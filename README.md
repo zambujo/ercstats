@@ -24,7 +24,7 @@ The [European Research Council (ERC)](https://erc.europa.eu) provides country st
 |projects        |factor    |`evaluated`, `granted`            |
 |n               |integer   |number of projects                |
 
-> 💡 _The numbers of evaluated projects can be lower than the number granted projects because of country mobility during the time lag between evaluation and approval of projects._
+> 💡 _The numbers of evaluated projects can be lower than the number granted projects because of researchers' mobility between countries during the time lag between evaluation and approval of projects._
 
 ## Tree
 
